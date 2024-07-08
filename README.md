@@ -1,124 +1,51 @@
-# Espressif IoT Development Framework
+# 环境安装  
+主机环境：ubuntu20及以上  
+sudo apt-get install git wget flex bison gperf python python3 python3-venv python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
 
-* [中文版](./README_CN.md)
+# 设置工具  
+(注意：可能需要梯子)  
+./install.sh esp32c3  
 
-ESP-IDF is the development framework for Espressif SoCs supported on Windows, Linux and macOS.
+# 设置环境变量  
+. ./export.sh  
 
-# ESP-IDF Release Support Schedule
+# 配置工程  
+cd ./examples/get-started/hello_world  
+idf.py set-target esp32 | esp32c3  
+idf.py menuconfig  
 
-![Support Schedule](https://dl.espressif.com/dl/esp-idf/support-periods.svg)
+# 编译  
+idf.py build  
 
-- Please read [the support policy](SUPPORT_POLICY.md) and [the documentation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/versions.html) for more information about ESP-IDF versions.
-- Please see the [End-of-Life Advisories](https://www.espressif.com/en/support/documents/advisories?keys=&field_type_of_advisory_tid%5B%5D=817) for information about ESP-IDF releases with discontinued support.
+# 烧录  
+idf.py -p /dev/ttyACM0 flash  
 
-# ESP-IDF Release and SoC Compatibility
+# 监视  
+idf.py -p /dev/ttyACM0 monitor  
 
-The following table shows ESP-IDF support of Espressif SoCs where ![alt text][preview] and ![alt text][supported] denote preview status and support, respectively. The preview support is usually limited in time and intended for beta versions of chips. Please use an ESP-IDF release where the desired SoC is already supported.
+# 烧录 + 监视  
+idf.py -p /dev/ttyACM0 flash monitor  
 
-|Chip         |          v4.1         |          v4.2          |         v4.3           |          v4.4          |          v5.0          |                                                                                      |
-|:----------- |:---------------------:| :---------------------:| :---------------------:| :---------------------:| :---------------------:|:------------------------------------------------------------------------------------ |
-|ESP32        |![alt text][supported] | ![alt text][supported] | ![alt text][supported] | ![alt text][supported] | ![alt text][supported] |                                                                                      |
-|ESP32-S2     |                       | ![alt text][supported] | ![alt text][supported] | ![alt text][supported] | ![alt text][supported] |                                                                                      |
-|ESP32-C3     |                       |                        | ![alt text][supported] | ![alt text][supported] | ![alt text][supported] |                                                                                      |
-|ESP32-S3     |                       |                        |                        | ![alt text][supported] | ![alt text][supported] | [Announcement](https://www.espressif.com/en/news/ESP32_S3)                           |
-|ESP32-C2     |                       |                        |                        |                        | ![alt text][supported] | [Announcement](https://blog.espressif.com/esp32-c2-and-why-it-matter-s-bcf4d7d0b2c6) |
-|ESP32-H2     |                       |                        |                        | ![alt text][preview]   | ![alt text][preview]   | [Announcement](https://www.espressif.com/en/news/ESP32_H2)                           |
+# 通过USB烧写  
+构建DFU镜像：idf.py dfu  
+烧写DFU镜像：idf.py dfu-flash  
+列出DFU设备：idf.py dfu-list  
+烧写DFU设备：idf.py dfu-flash --path 1-1  
 
-[supported]: https://img.shields.io/badge/-supported-green "supported"
-[preview]: https://img.shields.io/badge/-preview-orange "preview"
+# 擦除flash
+esp32 : idf.py -p /dev/ttyACM0 erase-flash  
+esp32c3 : esptool.py --chip esp32c3 --port /dev/ttyACM0 erase_flash
 
-Espressif SoCs released before 2016 (ESP8266 and ESP8285) are supported by [RTOS SDK](https://github.com/espressif/ESP8266_RTOS_SDK) instead.
+# 错误解决  
+1. A fatal error occurred: Could not open /dev/ttyACM0, the port doesn't exist  
+    临时：sudo chmod a+rw /dev/ttyACM0  
+    永久：sudo usermod -a -G dialout $USER 然后重启  
 
-# Developing With ESP-IDF
+2. A fatal error occurred: Packet content transfer stopped (received 24 bytes)  
+    esp32c3通过usb下载时遇到这个问题，需选上idf.py menuconfig-->serial flasher config-->Disable download stub  
 
-## Setting Up ESP-IDF
-
-See https://idf.espressif.com/ for links to detailed instructions on how to set up the ESP-IDF depending on chip you use.
-
-**Note:** Each SoC series and each ESP-IDF release has its own documentation. Please see Section [Versions](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/versions.html) on how to find documentation and how to checkout specific release of ESP-IDF.
-
-### Non-GitHub forks
-
-ESP-IDF uses relative locations as its submodules URLs ([.gitmodules](.gitmodules)). So they link to GitHub. If ESP-IDF is forked to a Git repository which is not on GitHub, you will need to run the script [tools/set-submodules-to-github.sh](tools/set-submodules-to-github.sh) after git clone.
-
-The script sets absolute URLs for all submodules, allowing `git submodule update --init --recursive` to complete. If cloning ESP-IDF from GitHub, this step is not needed.
-
-## Finding a Project
-
-As well as the [esp-idf-template](https://github.com/espressif/esp-idf-template) project mentioned in Getting Started, ESP-IDF comes with some example projects in the [examples](examples) directory.
-
-Once you've found the project you want to work with, change to its directory and you can configure and build it.
-
-To start your own project based on an example, copy the example project directory outside of the ESP-IDF directory.
-
-# Quick Reference
-
-See the Getting Started guide links above for a detailed setup guide. This is a quick reference for common commands when working with ESP-IDF projects:
-
-## Setup Build Environment
-
-(See the Getting Started guide listed above for a full list of required steps with more details.)
-
-* Install host build dependencies mentioned in the Getting Started guide.
-* Run the install script to set up the build environment. The options include `install.bat` or `install.ps1` for Windows, and `install.sh` or `install.fish` for Unix shells.
-* Run the export script on Windows (`export.bat`) or source it on Unix (`source export.sh`) in every shell environment before using ESP-IDF.
-
-## Configuring the Project
-
-* `idf.py set-target <chip_name>` sets the target of the project to `<chip_name>`. Run `idf.py set-target` without any arguments to see a list of supported targets.
-* `idf.py menuconfig` opens a text-based configuration menu where you can configure the project.
-
-## Compiling the Project
-
-`idf.py build`
-
-... will compile app, bootloader and generate a partition table based on the config.
-
-## Flashing the Project
-
-When the build finishes, it will print a command line to use esptool.py to flash the chip. However you can also do this automatically by running:
-
-`idf.py -p PORT flash`
-
-Replace PORT with the name of your serial port (like `COM3` on Windows, `/dev/ttyUSB0` on Linux, or `/dev/cu.usbserial-X` on MacOS. If the `-p` option is left out, `idf.py flash` will try to flash the first available serial port.
-
-This will flash the entire project (app, bootloader and partition table) to a new chip. The settings for serial port flashing can be configured with `idf.py menuconfig`.
-
-You don't need to run `idf.py build` before running `idf.py flash`, `idf.py flash` will automatically rebuild anything which needs it.
-
-## Viewing Serial Output
-
-The `idf.py monitor` target uses the [idf_monitor tool](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/idf-monitor.html) to display serial output from Espressif SoCs. idf_monitor also has a range of features to decode crash output and interact with the device. [Check the documentation page for details](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/idf-monitor.html).
-
-Exit the monitor by typing Ctrl-].
-
-To build, flash and monitor output in one pass, you can run:
-
-`idf.py flash monitor`
-
-## Compiling & Flashing Only the App
-
-After the initial flash, you may just want to build and flash just your app, not the bootloader and partition table:
-
-* `idf.py app` - build just the app.
-* `idf.py app-flash` - flash just the app.
-
-`idf.py app-flash` will automatically rebuild the app if any source files have changed.
-
-(In normal development there's no downside to reflashing the bootloader and partition table each time, if they haven't changed.)
-
-## Erasing Flash
-
-The `idf.py flash` target does not erase the entire flash contents. However it is sometimes useful to set the device back to a totally erased state, particularly when making partition table changes or OTA app updates. To erase the entire flash, run `idf.py erase-flash`.
-
-This can be combined with other targets, ie `idf.py -p PORT erase-flash flash` will erase everything and then re-flash the new app, bootloader and partition table.
-
-# Resources
-
-* Documentation for the latest version: https://docs.espressif.com/projects/esp-idf/. This documentation is built from the [docs directory](docs) of this repository.
-
-* The [esp32.com forum](https://esp32.com/) is a place to ask questions and find community resources.
-
-* [Check the Issues section on github](https://github.com/espressif/esp-idf/issues) if you find a bug or have a feature request. Please check existing Issues before opening a new one.
-
-* If you're interested in contributing to ESP-IDF, please check the [Contributions Guide](https://docs.espressif.com/projects/esp-idf/en/latest/contribute/index.html).
+3. KeyError: 'idfSelectedId'  
+    切换idf版本后要先删除环境变量  
+    sudo rm ~/.espressif/idf-env.json  
+    再安装：./install.sh  
+    安装时注意升级pip  
